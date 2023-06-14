@@ -4,6 +4,7 @@ import {
     puppeteer,
     oak,
 } from "../deps.ts";
+import puppeteerWait from "./puppeteerWait.js";
 
 export default class Server {
     readonly app: oak.Application;
@@ -79,12 +80,12 @@ export default class Server {
             try {
                 const t4 = performance.now();
                 await page.goto(`https://splashcat.ink/battles/${battleId}/opengraph/`, {
-                    waitUntil: "networkidle0",
+                    waitUntil: "domcontentloaded",
                 });
                 const t5 = performance.now();
                 this.addServerTimingHeader(context, "goto", t5 - t4, "Goto page");
 
-                /*const t6 = performance.now();
+                const t6 = performance.now();
                 await page.evaluate(puppeteerWait);
                 const t7 = performance.now();
                 this.addServerTimingHeader(
@@ -92,7 +93,7 @@ export default class Server {
                     "imgWait",
                     t7 - t6,
                     "Wait for images",
-                );*/
+                );
 
                 const t8 = performance.now();
                 const buffer = await page.screenshot({
