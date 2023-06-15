@@ -108,6 +108,13 @@ export default class Server {
                     "image/png",
                 );
                 context.response.body = buffer;
+                if (context.request.url.searchParams.get("test")) {
+                    context.response.headers.set(
+                        "Content-Type",
+                        "text/plain"
+                    );
+                    context.response.body = `generated image`;
+                }
             } finally {
                 page.close();
             }
