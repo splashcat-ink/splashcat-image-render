@@ -55,12 +55,12 @@ RUN apt-get -qq update \
 # In your real script, replace the installation script with https://deno.land/x/puppeteer@9.0.2/install.ts
 RUN PUPPETEER_PRODUCT=chrome deno run -A --unstable https://deno.land/x/puppeteer@16.2.0/install.ts
 
+WORKDIR /app
 COPY deps.ts deps.ts
 RUN deno cache deps.ts
 
 EXPOSE 3000
 
-WORKDIR /app
 COPY . .
 
 ENTRYPOINT ["deno"]
