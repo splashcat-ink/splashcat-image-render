@@ -79,7 +79,7 @@ export default class Server {
 
             try {
                 const t4 = performance.now();
-                await page.goto(`https://splashcat.ink/battles/${battleId}/opengraph/`, {
+                await page.goto(`http://splashcat.internal/battles/${battleId}/opengraph/`, {
                     waitUntil: "domcontentloaded",
                 });
                 const t5 = performance.now();
