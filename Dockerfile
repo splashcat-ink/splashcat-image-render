@@ -62,6 +62,7 @@ RUN deno cache deps.ts
 EXPOSE 3000
 
 COPY . .
+RUN deno cache main.ts
 
 ENTRYPOINT ["deno"]
 CMD ["run", "-A", "main.ts"]
