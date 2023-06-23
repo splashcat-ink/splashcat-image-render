@@ -78,6 +78,9 @@ export default class Server {
             this.addServerTimingHeader(context, "newPge", t3 - t2, "New page");
 
             try {
+                const originalUserAgent = await browser.userAgent();
+                await page.setUserAgent(`SplashcatImageRender (${Deno.hostname()}) / ${originalUserAgent}`);
+
                 const t4 = performance.now();
                 await page.goto(`http://splashcat.internal/battles/${battleId}/opengraph/`, {
                     waitUntil: "domcontentloaded",
