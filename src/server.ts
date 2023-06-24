@@ -82,7 +82,7 @@ export default class Server {
                 await page.setUserAgent(`SplashcatImageRender (${Deno.hostname()}) / ${originalUserAgent}`);
 
                 const t4 = performance.now();
-                await page.goto(`http://splashcat.internal/battles/${battleId}/opengraph/`, {
+                await page.goto(`https://splashcat.ink/battles/${battleId}/opengraph/`, {
                     waitUntil: "domcontentloaded",
                 });
                 const t5 = performance.now();
