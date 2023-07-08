@@ -1,9 +1,4 @@
-import {
-    colors,
-    isHttpError,
-    puppeteer,
-    oak,
-} from "../deps.ts";
+import {colors, isHttpError, oak, puppeteer,} from "../deps.ts";
 import puppeteerWait from "./puppeteerWait.js";
 
 export default class Server {
@@ -21,13 +16,13 @@ export default class Server {
         this.app.use(this.responseTime());
 
         this.app.use(this.errorHandler());
-        
+
         this.app.use(this.router.routes());
         this.app.use(this.router.allowedMethods());
 
         this.app.use(this.handle404());
     }
-    
+
     async getPuppeteerBrowser() {
         if (this.browser) {
             return this.browser;
@@ -62,66 +57,93 @@ export default class Server {
         this.router.get("/image-render/battle/:battleId/render(.png)?", async (context) => {
             const battleId = context.params.battleId;
 
-            const t0 = performance.now();
-            const browser = await this.getPuppeteerBrowser();
-            const t1 = performance.now();
-            this.addServerTimingHeader(
-                context,
-                "getPptrBrwsr",
-                t1 - t0,
-                "Get Puppeteer browser",
+            const buffer = await this.renderPage(`battles/${battleId}/opengraph/`, context);
+
+            context.response.headers.set(
+                "Content-Type",
+                "image/png",
             );
-
-            const t2 = performance.now();
-            const page = await browser.newPage();
-            const t3 = performance.now();
-            this.addServerTimingHeader(context, "newPge", t3 - t2, "New page");
-
-            try {
-                const originalUserAgent = await browser.userAgent();
-                await page.setUserAgent(`SplashcatImageRender (${Deno.hostname()}) / ${originalUserAgent}`);
-
-                const t4 = performance.now();
-                await page.goto(`https://splashcat.ink/battles/${battleId}/opengraph/`, {
-                    waitUntil: "domcontentloaded",
-                });
-                const t5 = performance.now();
-                this.addServerTimingHeader(context, "goto", t5 - t4, "Goto page");
-
-                const t6 = performance.now();
-                await page.evaluate(puppeteerWait);
-                const t7 = performance.now();
-                this.addServerTimingHeader(
-                    context,
-                    "imgWait",
-                    t7 - t6,
-                    "Wait for images",
-                );
-
-                const t8 = performance.now();
-                const buffer = await page.screenshot({
-                    type: "png",
-                    encoding: "binary",
-                }) as Buffer;
-                const t9 = performance.now();
-                this.addServerTimingHeader(context, "scrnshot", t9 - t8, "Screenshot");
-
+            context.response.body = buffer;
+            if (context.request.url.searchParams.get("test")) {
                 context.response.headers.set(
                     "Content-Type",
-                    "image/png",
+                    "text/plain"
                 );
-                context.response.body = buffer;
-                if (context.request.url.searchParams.get("test")) {
-                    context.response.headers.set(
-                        "Content-Type",
-                        "text/plain"
-                    );
-                    context.response.body = `generated image`;
-                }
-            } finally {
-                page.close();
+                context.response.body = `generated image`;
             }
         });
+
+        this.router.get("/image-render/user/:username/render(.png)?", async (context) => {
+            const username = context.params.username;
+
+            const buffer = await this.renderPage(`users/opengraph/${username}/user/`, context);
+
+            context.response.headers.set(
+                "Content-Type",
+                "image/png",
+            );
+            context.response.body = buffer;
+            if (context.request.url.searchParams.get("test")) {
+                context.response.headers.set(
+                    "Content-Type",
+                    "text/plain"
+                );
+                context.response.body = `generated image`;
+            }
+        });
+    }
+
+    async renderPage(path: string, context: oak.Context) {
+        const t0 = performance.now();
+        const browser = await this.getPuppeteerBrowser();
+        const t1 = performance.now();
+        this.addServerTimingHeader(
+            context,
+            "getPptrBrwsr",
+            t1 - t0,
+            "Get Puppeteer browser",
+        );
+
+        const t2 = performance.now();
+        const page = await browser.newPage();
+        const t3 = performance.now();
+        this.addServerTimingHeader(context, "newPge", t3 - t2, "New page");
+
+        try {
+            const originalUserAgent = await browser.userAgent();
+            await page.setUserAgent(`SplashcatImageRender (${Deno.hostname()}) / ${originalUserAgent}`);
+
+            const t4 = performance.now();
+            await page.goto(`https://splashcat.ink/${path}`, {
+                waitUntil: "domcontentloaded",
+            });
+            const t5 = performance.now();
+            this.addServerTimingHeader(context, "goto", t5 - t4, "Goto page");
+
+            const t6 = performance.now();
+            await page.evaluate(puppeteerWait);
+            const t7 = performance.now();
+            this.addServerTimingHeader(
+                context,
+                "imgWait",
+                t7 - t6,
+                "Wait for images",
+            );
+
+            const t8 = performance.now();
+            const buffer = await page.screenshot({
+                type: "png",
+                encoding: "binary",
+            }) as Buffer;
+            const t9 = performance.now();
+            this.addServerTimingHeader(context, "scrnshot", t9 - t8, "Screenshot");
+
+            page.close();
+
+            return buffer
+        } catch {
+            page.close();
+        }
     }
 
     handle404() {
@@ -168,9 +190,9 @@ export default class Server {
             } catch (err) {
                 if (isHttpError(err)) {
                     context.response.status = err.status;
-                    const { message, status, stack } = err;
+                    const {message, status, stack} = err;
                     if (context.request.accepts("json")) {
-                        context.response.body = { message, status, stack };
+                        context.response.body = {message, status, stack};
                         context.response.type = "json";
                     } else {
                         if (status === oak.Status.NotFound) {
@@ -192,7 +214,7 @@ export default class Server {
         context: oak.Context,
         name: string,
         time: number,
-        description?: string,
+        description ?: string,
     ) {
         context.response.headers.append(
             "Server-Timing",
