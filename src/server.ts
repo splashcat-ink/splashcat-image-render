@@ -63,7 +63,7 @@ export default class Server {
                 "Content-Type",
                 "image/png",
             );
-            context.response.body = buffer;
+            context.response.body ??= buffer;
             if (context.request.url.searchParams.get("test")) {
                 context.response.headers.set(
                     "Content-Type",
@@ -82,7 +82,7 @@ export default class Server {
                 "Content-Type",
                 "image/png",
             );
-            context.response.body = buffer;
+            context.response.body ??= buffer;
             if (context.request.url.searchParams.get("test")) {
                 context.response.headers.set(
                     "Content-Type",
@@ -114,11 +114,16 @@ export default class Server {
             await page.setUserAgent(`SplashcatImageRender (${Deno.hostname()}) / ${originalUserAgent}`);
 
             const t4 = performance.now();
-            await page.goto(`https://splashcat.ink/${path}`, {
+            const response = await page.goto(`https://splashcat.ink/${path}`, {
                 waitUntil: "domcontentloaded",
             });
             const t5 = performance.now();
             this.addServerTimingHeader(context, "goto", t5 - t4, "Goto page");
+
+            if (!response!.ok()) {
+                context.response.status = oak.Status.InternalServerError;
+                context.response.body = `An error occurred while processing your request. Splashcat replied with a ${response!.status()} when requesting the page (${response!.url()}).`;
+            }
 
             const t6 = performance.now();
             await page.evaluate(puppeteerWait);
