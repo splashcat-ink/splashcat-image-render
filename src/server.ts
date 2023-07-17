@@ -135,6 +135,9 @@ export default class Server {
                 "Wait for images",
             );
 
+            // wait an extra 100ms for images that can not be caught above
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
             const t8 = performance.now();
             const buffer = await page.screenshot({
                 type: "png",
