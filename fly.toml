@@ -5,6 +5,7 @@
 
 app = "splashcat-image-render"
 primary_region = "iad"
+swap_size_mb = 1024
 
 [env]
   PORT = "3000"
