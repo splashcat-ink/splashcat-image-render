@@ -91,6 +91,25 @@ export default class Server {
                 context.response.body = `generated image`;
             }
         });
+
+        this.router.get("/image-render/battle-group/:groupdId/render(.png)?", async (context) => {
+            const groupId = context.params.groupId;
+
+            const buffer = await this.renderPage(`battles/groups/${groupId}/opengraph/`, context);
+
+            context.response.headers.set(
+                "Content-Type",
+                "image/png",
+            );
+            context.response.body ??= buffer;
+            if (context.request.url.searchParams.get("test")) {
+                context.response.headers.set(
+                    "Content-Type",
+                    "text/plain"
+                );
+                context.response.body = `generated image`;
+            }
+        });
     }
 
     async renderPage(path: string, context: oak.Context) {
