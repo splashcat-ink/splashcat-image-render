@@ -161,6 +161,7 @@ export default class Server {
             const buffer = await page.screenshot({
                 type: "png",
                 encoding: "binary",
+                optimizeForSpeed: true,
             }) as Buffer;
             const t9 = performance.now();
             this.addServerTimingHeader(context, "scrnshot", t9 - t8, "Screenshot");
