@@ -1,4 +1,4 @@
-ARG DENO_VERSION=1.31.1
+ARG DENO_VERSION=1.41.0
 FROM denoland/deno:$DENO_VERSION
 
 # ↑ https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#chrome-headless-doesnt-launch-on-unix

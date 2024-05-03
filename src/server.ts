@@ -1,5 +1,6 @@
 import {colors, isHttpError, oak, puppeteer,} from "../deps.ts";
 import puppeteerWait from "./puppeteerWait.js";
+import {Buffer} from "https://deno.land/std@0.134.0/io/buffer.ts";
 
 export default class Server {
     readonly app: oak.Application;
@@ -58,61 +59,47 @@ export default class Server {
             const battleId = context.params.battleId;
 
             const buffer = await this.renderPage(`battles/${battleId}/opengraph/`, context);
-
-            context.response.headers.set(
-                "Content-Type",
-                "image/png",
-            );
-            context.response.body ??= buffer;
-            if (context.request.url.searchParams.get("test")) {
-                context.response.headers.set(
-                    "Content-Type",
-                    "text/plain"
-                );
-                context.response.body = `generated image`;
-            }
+            this.setResponse(context, buffer);
         });
 
         this.router.get("/image-render/user/:username/render(.png)?", async (context) => {
             const username = context.params.username;
 
             const buffer = await this.renderPage(`users/opengraph/${username}/user/`, context);
-
-            context.response.headers.set(
-                "Content-Type",
-                "image/png",
-            );
-            context.response.body ??= buffer;
-            if (context.request.url.searchParams.get("test")) {
-                context.response.headers.set(
-                    "Content-Type",
-                    "text/plain"
-                );
-                context.response.body = `generated image`;
-            }
+            this.setResponse(context, buffer);
         });
 
-        this.router.get("/image-render/battle-group/:groupdId/render(.png)?", async (context) => {
+        this.router.get("/image-render/embeds/user/@:username/stats/render(.png)?", async (context) => {
+            const username = context.params.username;
+
+            const buffer = await this.renderPage(`embeds/user/@${username}/stats/`, context, 500, 200);
+            this.setResponse(context, buffer);
+        });
+
+        this.router.get("/image-render/embeds/user/@:username/splashtag/render(.png)?", async (context) => {
+            const username = context.params.username;
+
+            const buffer = await this.renderPage(`embeds/user/@${username}/splashtag/`, context, 675, 200);
+            this.setResponse(context, buffer);
+        });
+
+        this.router.get("/image-render/embeds/user/@:username/gear/render(.png)?", async (context) => {
+            const username = context.params.username;
+
+            const buffer = await this.renderPage(`embeds/user/@${username}/gear/`, context, 500, 200);
+            console.log(context.response.body);
+            this.setResponse(context, buffer);
+        });
+
+        this.router.get("/image-render/battle-group/:groupId/render(.png)?", async (context) => {
             const groupId = context.params.groupId;
 
             const buffer = await this.renderPage(`battles/groups/${groupId}/opengraph/`, context);
-
-            context.response.headers.set(
-                "Content-Type",
-                "image/png",
-            );
-            context.response.body ??= buffer;
-            if (context.request.url.searchParams.get("test")) {
-                context.response.headers.set(
-                    "Content-Type",
-                    "text/plain"
-                );
-                context.response.body = `generated image`;
-            }
+            this.setResponse(context, buffer);
         });
     }
 
-    async renderPage(path: string, context: oak.Context) {
+    async renderPage(path: string, context: oak.Context, width: number = 1200, height: number = 630): Promise<Buffer | undefined> {
         const t0 = performance.now();
         const browser = await this.getPuppeteerBrowser();
         const t1 = performance.now();
@@ -125,6 +112,7 @@ export default class Server {
 
         const t2 = performance.now();
         const page = await browser.newPage();
+        page.setViewport({ width: width, height: height });
         const t3 = performance.now();
         this.addServerTimingHeader(context, "newPge", t3 - t2, "New page");
 
@@ -142,6 +130,7 @@ export default class Server {
             if (!response!.ok()) {
                 context.response.status = oak.Status.InternalServerError;
                 context.response.body = `An error occurred while processing your request. Splashcat replied with a ${response!.status()} when requesting the page (${response!.url()}).`;
+                return;
             }
 
             const t6 = performance.now();
@@ -159,24 +148,45 @@ export default class Server {
 
             const t8 = performance.now();
             const buffer = await page.screenshot({
-                type: "png",
-                encoding: "binary",
-                optimizeForSpeed: true,
-            }) as Buffer;
+              type: "png",
+              encoding: "binary",
+              optimizeForSpeed: true,
+            });
             const t9 = performance.now();
             this.addServerTimingHeader(context, "scrnshot", t9 - t8, "Screenshot");
 
             page.close();
 
             return buffer
-        } catch {
+        } catch(e) {
+            console.error("image rendering failed,", e);
             page.close();
         }
     }
 
+    setResponse(context: oak.Context, imageBuffer?: Buffer) {
+        if (!imageBuffer) {
+            context.response.status = oak.Status.InternalServerError;
+            return;
+        }
+
+        context.response.headers.set(
+            "Content-Type",
+            "image/png",
+        );
+        context.response.body ??= imageBuffer;
+        if (context.request.url.searchParams.get("test")) {
+            context.response.headers.set(
+                "Content-Type",
+                "text/plain"
+            );
+            context.response.body = `generated image`;
+        }
+    }
+
     handle404() {
-        return async (context: oak.Context) => {
-            await this.render404(context);
+        return (context: oak.Context) => {
+            this.render404(context);
         };
     }
 
@@ -224,7 +234,7 @@ export default class Server {
                         context.response.type = "json";
                     } else {
                         if (status === oak.Status.NotFound) {
-                            await this.render404(context);
+                            this.render404(context);
                             return;
                         }
                         context.response.body = `${status} ${message}\n\n${stack ?? ""}`;
