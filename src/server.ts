@@ -72,21 +72,21 @@ export default class Server {
         this.router.get("/image-render/embeds/user/@:username/stats/render(.png)?", async (context) => {
             const username = context.params.username;
 
-            const buffer = await this.renderPage(`embeds/user/@${username}/stats/`, context, 500, 200);
+            const buffer = await this.renderPage(`embeds/user/@${username}/stats/`, context, 500, 200, 2);
             this.setResponse(context, buffer);
         });
 
         this.router.get("/image-render/embeds/user/@:username/splashtag/render(.png)?", async (context) => {
             const username = context.params.username;
 
-            const buffer = await this.renderPage(`embeds/user/@${username}/splashtag/`, context, 675, 200);
+            const buffer = await this.renderPage(`embeds/user/@${username}/splashtag/`, context, 675, 200, 2);
             this.setResponse(context, buffer);
         });
 
         this.router.get("/image-render/embeds/user/@:username/gear/render(.png)?", async (context) => {
             const username = context.params.username;
 
-            const buffer = await this.renderPage(`embeds/user/@${username}/gear/`, context, 500, 200);
+            const buffer = await this.renderPage(`embeds/user/@${username}/gear/`, context, 500, 200, 2);
             console.log(context.response.body);
             this.setResponse(context, buffer);
         });
@@ -99,7 +99,7 @@ export default class Server {
         });
     }
 
-    async renderPage(path: string, context: oak.Context, width: number = 1200, height: number = 630): Promise<Buffer | undefined> {
+    async renderPage(path: string, context: oak.Context, width: number = 1200, height: number = 630, deviceScaleFactor: number = 1): Promise<Buffer | undefined> {
         const t0 = performance.now();
         const browser = await this.getPuppeteerBrowser();
         const t1 = performance.now();
@@ -112,7 +112,7 @@ export default class Server {
 
         const t2 = performance.now();
         const page = await browser.newPage();
-        page.setViewport({ width: width, height: height });
+        page.setViewport({ width: width, height: height, deviceScaleFactor });
         const t3 = performance.now();
         this.addServerTimingHeader(context, "newPge", t3 - t2, "New page");
 
