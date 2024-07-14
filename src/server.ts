@@ -58,7 +58,7 @@ export default class Server {
         this.router.get("/image-render/battle/:battleId/render(.png)?", async (context) => {
             const battleId = context.params.battleId;
 
-            const buffer = await this.renderPage(`battles/${battleId}/opengraph/`, context);
+            const buffer = await this.renderPage(`battles/${battleId}/opengraph/`, context, undefined, undefined, 1.5);
             this.setResponse(context, buffer);
         });
 
