@@ -201,7 +201,7 @@ export default class Server {
             await next();
             const rt = context.response.headers.get("X-Response-Time");
             console.log(
-                `${colors.green(context.request.method)} ${
+                `"${context.request.headers.get("User-Agent")}" ${colors.green(context.request.method)} ${
                     colors.cyan(decodeURIComponent(context.request.url.pathname))
                 } - ${
                     colors.bold(
