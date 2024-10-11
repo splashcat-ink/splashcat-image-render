@@ -21,6 +21,7 @@ swap_size_mb = 1024
   min_machines_running = 0
   processes = ["app"]
   [http_service.concurrency]
+    type = "requests"
     hard_limit = 10
     soft_limit = 3
 
